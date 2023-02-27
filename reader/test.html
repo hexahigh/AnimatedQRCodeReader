@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+  <title>QR Code Scanner</title>
+  <meta charset="UTF-8">
+</head>
+<body>
+  <h1>QR Code Scanner</h1>
+  <video id="preview" width="300" height="200"></video>
+  <p id="status"></p>
+  <p id="result"></p>
+  <button id="startButton">Start</button>
+  <button id="stopButton" disabled>Stop</button>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script>
+    const codeReader = new ZXing.BrowserQRCodeReader();
+    const previewElem = document.getElementById('preview');
+    const statusElem = document.getElementById('status');
+    const resultElem = document.getElementById('result');
+    const startButtonElem = document.getElementById('startButton');
+    const stopButtonElem = document.getElementById('stopButton');
+
+    codeReader.listVideoInputDevices()
+      .then((videoInputDevices) => {
+        if (videoInputDevices.length > 0) {
+          const selectedDeviceId = videoInputDevices[0].deviceId;
+          codeReader.decodeFromVideoDevice(selectedDeviceId, 'preview', (result, err) => {
+            if (result) {
+              resultElem.textContent = result.text;
+            }
+            if (err && !(err instanceof ZXing.NotFoundException)) {
+              console.error(err);
+              statusElem.textContent = 'Error decoding QR Code';
+            }
+          }).catch((err) => {
+            console.error(err);
+            statusElem.textContent = 'Error initializing video capture';
+          });
+        } else {
+          console.error('No video input devices found');
+          statusElem.textContent = 'No video input devices found';
+        }
+      }).catch((err) => {
+        console.error(err);
+        statusElem.textContent = 'Error listing video input devices';
+      });
+
+    startButtonElem.addEventListener('click', () => {
+      codeReader.reset();
+      codeReader.decodeFromVideoDevice(undefined, 'preview', (result, err) => {
+        if (result) {
+          resultElem.textContent = result.text;
+        }
+        if (err && !(err instanceof ZXing.NotFoundException)) {
+          console.error(err);
+          statusElem.textContent = 'Error decoding QR Code';
+        }
+      }).catch((err) => {
+        console.error(err);
+        statusElem.textContent = 'Error initializing video capture';
+      });
+      startButtonElem.disabled = true;
+      stopButtonElem.disabled = false;
+    });
+
+    stopButtonElem.addEventListener('click', () => {
+      codeReader.reset();
+      startButtonElem.disabled = false;
+      stopButtonElem.disabled = true;
+    });
+  </script>
+</body>
+</html>
